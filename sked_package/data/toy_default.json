@@ -1,0 +1,43 @@
+{
+  "sched_algorithm": "FCFS",
+  "time_slice": 2,
+  "format": "full",
+  "auto": {
+    "number_of_processes": 0,
+    "arrival_time": {
+      "from": 1,
+      "to": 3
+    },
+    "burst_time": {
+      "from": 1,
+      "to": 5
+    },
+    "total_time": { "from": 1, "to": 3 }
+  },
+  "manual": [
+    {
+      "pid": "p1",
+      "arrival_time": 0,
+      "total_time": 6,
+      "priority": 2
+    },
+    {
+      "pid": "p2",
+      "arrival_time": 1,
+      "total_time": 3,
+      "priority": 1
+    },
+    {
+      "pid": "p3",
+      "arrival_time": 2,
+      "total_time": 1,
+      "priority": 10
+    },
+    {
+      "pid": "p4",
+      "arrival_time": 4,
+      "total_time": 7,
+      "priority": 3
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name="sked_pitosalas"
+version="0.0.22"
+authors= [{ name="Pito Salas"}]
+description = "Simulator of scheduling algorithms"
+requires-python = ">= 3.7"
+
+[project.scripts]
+sked = "sked_pitosalas.sked:cli"
