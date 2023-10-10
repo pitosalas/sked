@@ -1,0 +1,38 @@
+{
+  "sched_algorithm": "SJF",
+  "display": {
+    "intro": [
+      "pid",
+      "arrival_time",
+      "burst_time"
+    ],
+    "status": [
+      "pid",
+      "status",
+      "start_time",
+      "run_time",
+      "wall_time",
+      "wait_time"
+    ]
+  },
+  "manual": [
+    {
+      "pid": "p1",
+      "burst_pattern": [
+        "ready",
+        "ready",
+        "ready",
+        "terminated"
+      ]
+    },
+    {
+      "pid": "p2",
+      "burst_pattern": [
+        "ready",
+        "ready",
+        "ready",
+        "terminated"
+      ]
+    }
+  ]
+}

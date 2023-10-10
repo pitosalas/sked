@@ -42,7 +42,7 @@ def generate_status_rg(sim) -> Group:
     Prints the current status of the operating system representing the terminated queue.
     """
     line1 = Text(f"Clock: {sim.clock.get_time()}", style="bold red")
-    line2 = Text(f"Timeline: {sim.sched.progress}", style="bold red")
+    line2 = Text(f"Timeline+: {sim.sched.progress}", style="bold red")
     table = Table(show_header=True, header_style="bold magenta")
     add_columns(table, sim.display["status"])
     add_rows(table, sim.sched.running, sim.display["status"])

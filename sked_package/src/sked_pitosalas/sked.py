@@ -1,4 +1,4 @@
-from sked_pitosalas.simulation import Simulation
+from simulation import Simulation
 from importlib.metadata import version
 
 
@@ -37,7 +37,7 @@ HELP = """
 Use this little tool to experiment with and demonstrate different scheduling algorithms. It is open source and a work in progress so expect bugs and help us fix them!
 """
 def cli():
-    print(f"Welcome! to Sked version {version('sked-pitosalas')}")
+    print(f"Welcome! to Sked")
     parser = argparse.ArgumentParser(description='Simple scheduler CLI')
 
     parser.add_argument('-d', '--doc', action='store_true', help='Print documentation')

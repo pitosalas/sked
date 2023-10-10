@@ -1,10 +1,10 @@
-from sked_pitosalas.clock import Clock
+from clock import Clock
 import json
-from sked_pitosalas.pcb import PCB
-from sked_pitosalas.scheduler import FCFS, SJF, RR
+from pcb import PCB
+from scheduler import FCFS, SJF, RR
 import time
 from pathlib import Path
-import sked_pitosalas.tui
+import tui
 from rich.console import Console
 import random
 from rich.live import Live
@@ -27,7 +27,7 @@ class Simulation:
             self.clock.increment()
             if self.sched.all_processes_done():
                 break
-        sked_pitosalas.tui.print_status(self)
+        tui.print_status(self)
 
     def run(self, live_mode, file_name):
         self.setup_run(file_name)
@@ -37,9 +37,9 @@ class Simulation:
             self.run_step()
 
     def run_animated(self):
-        self.intro_rg = sked_pitosalas.tui.generate_intro_rg(self)
+        self.intro_rg = tui.generate_intro_rg(self)
         self.run_live()
-        sked_pitosalas.tui.print_summary(self)
+        tui.print_summary(self)
     
     def run_step(self):
         self.print_intro()
@@ -54,7 +54,7 @@ class Simulation:
                 break
             else:
                 print("Invalid response. Try again.")
-        sked_pitosalas.tui.print_summary(self)
+        tui.print_summary(self)
 
     def setup_run(self, given_filename):
         if given_filename:
@@ -64,18 +64,17 @@ class Simulation:
         full_path = Path("data") / filename
         print(f"Running simulation with {full_path}")
         self.import_json_file(full_path)
-        print(f"******* {self.data}")
         self.construct_scheduler()
         self.clock.register_object(self.sched)
         self.configure_scheduler(self.data)
 
     def run_live(self):
         Console().clear()
-        with Live(sked_pitosalas.tui.group_rg(self)) as live:
+        with Live(tui.group_rg(self)) as live:
             while not self.sched.all_processes_done():
                 time.sleep(1)  # arbitrary delay
                 self.clock.increment()
-                live.update(sked_pitosalas.tui.group_rg(self))
+                live.update(tui.group_rg(self))
 
     def construct_scheduler(self):
         """
@@ -105,7 +104,7 @@ class Simulation:
 
     def print_intro(self):
         console = Console()
-        rg = sked_pitosalas.tui.generate_intro_rg(self)
+        rg = tui.generate_intro_rg(self)
         console.print(rg)
 
     # Function to read the json file

@@ -1,4 +1,4 @@
-from sked_pitosalas.queue import Queue
+from queue import Queue
 from abc import ABC, abstractmethod
 from rich.live import Live
 
@@ -128,7 +128,7 @@ class SJF(Scheduler):
         self.move_to_terminated()
         self.move_to_waiting()
         self.update_running_process()       
-        # print(f"c: {time}, r: {self.running.length()}, rd: {self.ready_queue.length()}, w: {self.waiting_queue.length()}, n: {self.new_queue.length()}, t: {self.terminated_queue.length()}")
+        print(f"c: {time}, r: {self.running.length()}, rd: {self.ready_queue.length()}, w: {self.waiting_queue.length()}, n: {self.new_queue.length()}, t: {self.terminated_queue.length()}")
         self.update_waiting_processes()
 
     def move_based_on_pattern(self, source_queue, pattern, dest_queue):
