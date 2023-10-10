@@ -83,7 +83,7 @@ class Scheduler(ABC):
         for ready in self.ready_queue._list:
             ready.wait_time += 1
             ready.waiting_time += 1
-            if ready.start_time is not None:
+            if ready.start_time is None:
                 ready.start_time = self.clock.get_time()
 
     def get_average_wait_time(self):
@@ -100,7 +100,7 @@ class Scheduler(ABC):
 
     def get_average_start_time(self):
         """
-        Returns the average time waiting  before starting
+        Returns the average time waiting before starting
         """
         total = 0
         for pcb in self.terminated_queue._list:
@@ -130,6 +130,11 @@ class SJF(Scheduler):
         self.update_running_process()       
         print(f"c: {time}, r: {self.running.length()}, rd: {self.ready_queue.length()}, w: {self.waiting_queue.length()}, n: {self.new_queue.length()}, t: {self.terminated_queue.length()}")
         self.update_waiting_processes()
+
+    def schedule_next(self):
+        
+        print("Schedule Next SJF")
+    
 
     def move_based_on_pattern(self, source_queue, pattern, dest_queue):
         to_move = []

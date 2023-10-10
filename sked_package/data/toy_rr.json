@@ -1,7 +1,21 @@
 {
   "sched_algorithm": "RR",
   "time_slice": 2,
-  "format": "full",
+  "display": {
+    "intro":[
+      "pid",
+      "arrival_time",
+      "burst_time"
+    ],
+    "status":[
+      "pid",
+      "status",
+      "start_time",
+      "run_time",
+      "wall_time",
+      "wait_time"
+    ]
+  },
   "auto": {
     "number_of_processes": 0,
     "arrival_time": {
