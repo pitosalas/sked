@@ -25,7 +25,7 @@ DOC = """
 * Once the simulation starts, each process tracks the following
     * Run Time: Number of CPU tics the process has used so far ("run")
     * Wall Time: Number of tics since the process was first run until it terminates ("wall")
-    * Wait Time: Total tics a process spends waiting (on ready and wait queues) ("wait)
+    * Wait Time: Total tics a process spends waiting (on ready queues) ("wait")
     * Start Time: Time(tics) when the process was first run ("start")
 
 * When the simulation completes the following are calculated:

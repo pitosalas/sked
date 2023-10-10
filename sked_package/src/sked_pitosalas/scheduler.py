@@ -1,6 +1,6 @@
 from queue import Queue
 from abc import ABC, abstractmethod
-from rich.live import Live
+from pcb import PCB
 
 
 class Scheduler(ABC):
@@ -114,7 +114,6 @@ class Scheduler(ABC):
     def update(self, time):
         pass
 
-
 class SJF(Scheduler):
     def __init__(self, sim):
         super().__init__(sim)
@@ -123,52 +122,25 @@ class SJF(Scheduler):
 
     def update(self, time):
         self.clock = self.simulation.clock
-        self.move_to_ready()
-        self.schedule_next()
-        self.move_to_terminated()
-        self.move_to_waiting()
-        self.update_running_process()       
+    # Consider all process on the new queue. If their execution state is "ready", then
+    # add them to the ready queue. If it is "wait", then move them to the waiting queue.
+
+    # Consider the process on the running queue. If it's execution state is "terminated",
+    # then add it to the terminated queue. If it is "wait", then move it to the waiting queue.
+
+    # Consider the processes on the waiting queue. If it's execution state is "ready",
+    # the move it to the ready queue.
+
+    # Go through all running and waiting processes to update their statistics
+
+
+
+        self.update_running_process()
+        self.update_waiting_processes()
         print(f"c: {time}, r: {self.running.length()}, rd: {self.ready_queue.length()}, w: {self.waiting_queue.length()}, n: {self.new_queue.length()}, t: {self.terminated_queue.length()}")
         self.update_waiting_processes()
 
-    def schedule_next(self):
-        
-        print("Schedule Next SJF")
-    
 
-    def move_based_on_pattern(self, source_queue, pattern, dest_queue):
-        to_move = []
-        for pcb in source_queue._list:
-            if pcb.burst_pattern[self.clock.get_time()] == pattern:
-                to_move += [pcb]
-        for pcb in to_move:
-            if (dest_queue.name == "Ready Queue"):
-                if pcb.start_time is None:
-                    pcb.start_time = self.clock.get_time()
-            dest_queue.add_at_end(source_queue.remove(pcb))
-
-    def move_to_ready(self):
-        # while there are still pcbs on new queue, remove them from new queue and add them to ready queue
-        self.move_based_on_pattern(self.new_queue, "ready", self.ready_queue)
-        self.move_based_on_pattern(
-            self.waiting_queue, "ready", self.ready_queue)
-        self.move_based_on_pattern(self.running, "ready", self.ready_queue)
-
-    def move_to_waiting(self):
-        self.move_based_on_pattern(self.new_queue, "wait", self.waiting_queue)
-        self.move_based_on_pattern(
-            self.ready_queue, "wait", self.waiting_queue)
-        self.move_based_on_pattern(self.running, "wait", self.waiting_queue)
-
-    def move_to_terminated(self):
-        self.move_based_on_pattern(
-            self.new_queue, "terminated", self.terminated_queue)
-        self.move_based_on_pattern(
-            self.ready_queue, "terminated", self.terminated_queue)
-        self.move_based_on_pattern(
-            self.running, "terminated", self.terminated_queue)
-        self.move_based_on_pattern(
-            self.waiting_queue, "terminated", self.terminated_queue)
 
 class RR(Scheduler):
     def __init__(self, sim):
@@ -205,3 +177,81 @@ class FCFS(Scheduler):
         self.schedule_next()
         self.update_running_process()
         self.update_waiting_processes()
+
+
+
+class SJFOld(Scheduler):
+    def __init__(self, sim):
+        super().__init__(sim)
+        self.sim = sim
+        self.print_name = "Shortest Job First OLD"
+
+    def update(self, time):
+        self.clock = self.simulation.clock
+        self.move_to_ready()
+        self.schedule_next()
+        self.move_to_terminated()
+        self.move_to_waiting()
+        self.update_running_process()       
+        print(f"c: {time}, r: {self.running.length()}, rd: {self.ready_queue.length()}, w: {self.waiting_queue.length()}, n: {self.new_queue.length()}, t: {self.terminated_queue.length()}")
+        self.update_waiting_processes()
+
+    def schedule_next(self):
+        # Get current time
+        current_time = self.clock.get_time()
+
+        # Go through all processes on the new queue and check whether their corresponding
+        # burst pattern is "ready" at the current time. If so, add them to the end of ready queue.
+        self.move_based_on_pattern(self.new_queue, "ready", self.ready_queue)
+
+        # Check the process in the Running queue. If it's corresponding burst pattern is "terminated",
+        # then remove it from the running queue and add it to the terminated queue.
+        running = self.running.head
+        if running is not None and running.burst_pattern[current_time] == "terminated":
+            self.terminated_queue.add_at_end(self.running.remove(running))
+
+        # Check the process on the Running queue. If it's corresponding burst pattern is "wait",
+        # then remove it from the running queue and add it to the waiting queue.
+        if running is not None and running.burst_pattern[current_time] == "wait":
+            self.waiting_queue.add_at_end(self.running.remove(running))
+
+        # Check the processes on the Waiting queue. If it's corresponding burst pattern is "ready",
+        # then remove it from the waiting queue and add it to the ready queue
+        self.move_based_on_pattern(self.waiting_queue, "ready", self.ready_queue)
+    
+
+    def move_based_on_pattern(self, source_queue, pattern, dest_queue):
+        to_move = []
+        pcb: PCB
+        for pcb in source_queue._list:
+            if pcb.get_execution_state() == pattern:
+                to_move += [pcb]
+        for pcb in to_move:
+            if (dest_queue.name == "Ready Queue"):
+                if pcb.start_time is None:
+                    pcb.start_time = self.clock.get_time()
+            dest_queue.add_at_end(source_queue.remove(pcb))
+
+    def move_to_ready(self):
+        # while there are still pcbs on new queue, remove them from new queue and add them to ready queue
+        self.move_based_on_pattern(self.new_queue, "ready", self.ready_queue)
+        self.move_based_on_pattern(
+            self.waiting_queue, "ready", self.ready_queue)
+        self.move_based_on_pattern(self.running, "ready", self.ready_queue)
+
+    def move_to_waiting(self):
+        self.move_based_on_pattern(self.new_queue, "wait", self.waiting_queue)
+        self.move_based_on_pattern(
+            self.ready_queue, "wait", self.waiting_queue)
+        self.move_based_on_pattern(self.running, "wait", self.waiting_queue)
+
+    def move_to_terminated(self):
+        self.move_based_on_pattern(
+            self.new_queue, "terminated", self.terminated_queue)
+        self.move_based_on_pattern(
+            self.ready_queue, "terminated", self.terminated_queue)
+        self.move_based_on_pattern(
+            self.running, "terminated", self.terminated_queue)
+        self.move_based_on_pattern(
+            self.waiting_queue, "terminated", self.terminated_queue)
+
