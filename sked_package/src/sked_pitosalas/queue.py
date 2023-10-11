@@ -1,5 +1,6 @@
+from simulation import Simulation
 class Queue:
-    def __init__(self, name: str, simulation):
+    def __init__(self, name: str, simulation: Simulation):
         self.name = name
         self.simulation = simulation
         self._list = []
@@ -24,7 +25,7 @@ class Queue:
         return len(self._list) == 0
 
     @property
-    def head(self):
+    def head(self): 
         if len(self._list) > 0:
             return self._list[0]
         else:

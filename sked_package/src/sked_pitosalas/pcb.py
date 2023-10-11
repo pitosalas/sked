@@ -30,10 +30,15 @@ class PCB:
 # state by tick, assuming that the process never had to wait. While the process is waiting, the
 # process is not advancing in the burst pattern. The wait time is the number of ticks the process
 # has been in the ready queue, not running.
+
     def get_execution_state(self) -> str:
         if self.burst_pattern is None:
             return None
-        return self.burst_pattern[self.wall_time-self.wait_time]
+        if self.wall_time is None and self.burst_pattern[0] == "ready":
+            self.wall_time = 0
+            return "ready"
+        else:
+            return self.burst_pattern[self.wall_time-self.wait_time]
 
     def __repr__(self):
         return f"PCB({self.pid}, {self.arrival_time}, {self.burst_time}, {self.total_time}, {self.wait_time})"
