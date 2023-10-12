@@ -8,6 +8,7 @@ class Clock:
         self.time = 0
 
     def increment(self):
+        print(f"Incrementing: {self.time} watchers: {len(self.watchers)}\n" )
         for obj in self.watchers:
             obj.update(self.time)
         self.time += 1

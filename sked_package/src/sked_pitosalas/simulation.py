@@ -23,11 +23,11 @@ class Simulation:
         self.format = "full"
 
     def stepper(self, count):
+        tui.print_status(self)
         for i in range(count):
             self.clock.increment()
             if self.sched.all_processes_done():
                 break
-        tui.print_status(self)
 
     def run(self, live_mode, file_name):
         self.setup_run(file_name)

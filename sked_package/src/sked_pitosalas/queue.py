@@ -1,8 +1,7 @@
-from simulation import Simulation
 class Queue:
-    def __init__(self, name: str, simulation: Simulation):
+    def __init__(self, name: str, sim):
         self.name = name
-        self.simulation = simulation
+        self.simulation = sim
         self._list = []
 
     def add_at_end(self, pcb):

@@ -1,11 +1,10 @@
 from queue import Queue
 from abc import ABC, abstractmethod
 from pcb import PCB
-from simulation import Simulation
 
 
 class Scheduler(ABC):
-    def __init__(self, sim: Simulation):
+    def __init__(self, sim):
         self.new_queue = Queue("New", sim)
         self.ready_queue: Queue = Queue("Ready Queue", sim)
         self.waiting_queue: Queue = Queue("Waiting Queue", sim)
@@ -123,7 +122,6 @@ class SJF(Scheduler):
 
     def move_based_on_pattern(self, source_queue: Queue, pattern: str, dest_queue: Queue):
         to_move = []
-        pcb: PCB
         for pcb in source_queue._list:
             if pcb.get_execution_state() == pattern:
                 to_move += [pcb]
@@ -133,9 +131,9 @@ class SJF(Scheduler):
                     pcb.start_time = self.clock.get_time()
             dest_queue.add_at_end(source_queue.remove(pcb))
 
-
     def update(self, time):
         self.clock = self.simulation.clock
+        current_time = self.clock.get_time()
 
     # Go through all processes on the new queue and check whether their corresponding
     # burst pattern is "ready" at the current time. If so, add them to the end of ready queue.
@@ -144,8 +142,15 @@ class SJF(Scheduler):
     # Check the process in the Running queue. If it's corresponding burst pattern is "terminated",
     # then remove it from the running queue and add it to the terminated queue.
         running: PCB = self.running.head
-        if running is not None and running.burst_pattern[current_time] == "terminated":
-            self.terminated_queue.add_at_end(self.running.remove(running))
+        if running is not None:
+            if running.get_execution_state() == "terminated":
+                self.terminated_queue.add_at_end(self.running.remove(running))
+            elif running.get_execution_state() == "wait":
+                self.waiting_queue.add_at_end(self.running.remove(running))
+        else:
+            process_to_run = self.ready_queue.remove_from_front()
+            self.running.add_at_end(process_to_run)
+
 
         # # Check the process on the Running queue. If it's corresponding burst pattern is "wait",
         # # then remove it from the running queue and add it to the waiting queue.
@@ -165,7 +170,6 @@ class SJF(Scheduler):
 
     # Go through all running and waiting processes to update their statistics
         self.update_running_process()
-        self.update_waiting_processes()
         self.update_waiting_processes()
         print(f"c: {time}, r: {self.running.length()}, rd: {self.ready_queue.length()}, w: {self.waiting_queue.length()}, n: {self.new_queue.length()}, t: {self.terminated_queue.length()}")
 
