@@ -133,7 +133,6 @@ class SJF(Scheduler):
 
     def update(self, time):
         self.clock = self.simulation.clock
-        current_time = self.clock.get_time()
 
     # Go through all processes on the new queue and check whether their corresponding
     # burst pattern is "ready" at the current time. If so, add them to the end of ready queue.
