@@ -23,11 +23,11 @@ class Simulation:
         self.format = "full"
 
     def stepper(self, count):
-        tui.print_status(self)
         for i in range(count):
             self.clock.increment()
             if self.sched.all_processes_done():
                 break
+        tui.print_status(self)
 
     def run(self, live_mode, file_name):
         self.setup_run(file_name)
@@ -43,8 +43,8 @@ class Simulation:
     
     def run_step(self):
         self.print_intro()
+        self.sched.update(self.clock)
         while not self.sched.all_processes_done():
-            tui.print_status(self)
             response = input("[s(tep),q(uit), g(o): ")
             if response == "q":
                 break
@@ -63,7 +63,7 @@ class Simulation:
         else:   
             filename = self.prompt_for_filename()
         full_path = Path("data") / filename
-        print(f"Running simulation with {full_path}")
+        self.log(f"Running simulation with {full_path}")
         self.import_json_file(full_path)
         self.construct_scheduler()
         self.clock.register_object(self.sched)
@@ -119,7 +119,7 @@ class Simulation:
                 exit()
 
     def configure_scheduler(self, data):
-        self.quantum = data.get("time_slice", 1)
+        self.quantum = data.get("quantum", 1)
         self.sched_algorithm = data["sched_algorithm"]
         self.display = data["display"]
         # if there is a key "manual", then we  each process separately.
@@ -152,3 +152,6 @@ class Simulation:
                 pcb = PCB(pid, arrival_time, burst_time, total_time)
                 self.sched.new_queue.add_at_end(pcb)
                 self.clock.register_object(pcb)
+
+    def log(self, fstring: str):
+        if False: print(fstring)

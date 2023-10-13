@@ -2,7 +2,7 @@ from queue import Queue
 from abc import ABC, abstractmethod
 from pcb import PCB
 
-
+LOGGING = True
 class Scheduler(ABC):
     def __init__(self, sim):
         self.new_queue = Queue("New", sim)
@@ -113,7 +113,7 @@ class Scheduler(ABC):
         print(f"run: {self.running.pids_string()}, ready: {self.ready_queue.pids_string()}, wait: {self.waiting_queue.pids_string()}, nw: {self.new_queue.pids_string()}, term: {self.terminated_queue.pids_string()}")
 
     def log(self, fstring: str):
-        if False: print(fstring)
+        if LOGGING: print(fstring)
 
     @abstractmethod
     def update(self, time):
@@ -129,7 +129,7 @@ class SJF(Scheduler):
     def move_based_on_pattern(self, source_queue: Queue, pattern: str, dest_queue: Queue):
         to_move = []
         for pcb in source_queue._list:
-            if pcb.get_execution_state() == pattern:
+            if pcb.get_execution_state(self.sim.clock.get_time()) == pattern:
                 to_move += [pcb]
         for pcb in to_move:
             if (dest_queue.name == "Ready Queue"):
@@ -141,11 +141,11 @@ class SJF(Scheduler):
         to_move_to_ready = []
         to_move_to_waiting = []
         for pcb in queue._list:
-            self.log(f"checking {pcb.pid} in {queue}")
-            if pcb.get_execution_state() == "ready" and not queue.name == "Ready Queue" and not queue.name == "Running":
+            self.log(f"checking {pcb.pid}({pcb.get_execution_state(self.sim.clock.get_time())}) in {queue}")
+            if (pcb.get_execution_state(self.sim.clock.get_time()) == "ready") and not (queue.name == "Ready Queue" or queue.name == "Running"):
                 self.log(f"moving {pcb.pid} from {queue} to ready queue")
                 to_move_to_ready += [pcb]
-            elif pcb.get_execution_state() == "wait" and not queue.name == "Waiting Queue":
+            elif pcb.get_execution_state(self.sim.clock.get_time()) == "wait" and not queue.name == "Waiting Queue":
                 self.log(f"moving {pcb.pid} from {queue} to waiting queue")
                 to_move_to_waiting += [pcb]
         for pcb in to_move_to_ready:
@@ -163,30 +163,14 @@ class SJF(Scheduler):
 
         running: PCB = self.running.head
         if running is not None:
-            if running.get_execution_state() == "terminated":
+            if running.get_execution_state(self.sim.clock.get_time()) == "terminated":
                 self.terminated_queue.add_at_end(self.running.remove(running))
-            elif running.get_execution_state() == "wait":
+            elif running.get_execution_state(self.sim.clock.get_time()) == "wait":
                 self.waiting_queue.add_at_end(self.running.remove(running))
         elif not self.ready_queue.empty():
             process_to_run = self.ready_queue.remove_from_front()
             self.running.add_at_end(process_to_run)
 
-        # # Check the process on the Running queue. If it's corresponding burst pattern is "wait",
-        # # then remove it from the running queue and add it to the waiting queue.
-        # if running is not None and running.burst_pattern[current_time] == "wait":
-        #     self.waiting_queue.add_at_end(self.running.remove(running))
-
-        # # Check the processes on the Waiting queue. If it's corresponding burst pattern is "ready",
-        # # then remove it from the waiting queue and add it to the ready queue
-        # self.move_based_on_pattern(self.waiting_queue, "ready", self.ready_queue)
-
-    # Consider the process on the running queue. If it's execution state is "terminated",
-    # then add it to the terminated queue. If it is "wait", then move it to the waiting queue.
-
-    # Consider the processes on the waiting queue. If it's execution state is "ready",
-    # the move it to the ready queue.
-
-    # Go through all running and waiting processes to update their statistics
         self.update_running_process()
         self.update_waiting_processes()
         self.log(f"***End of update*** {self.simulation.clock.get_time()}")
@@ -220,7 +204,7 @@ class FCFS(Scheduler):
         self.sim = sim
         self.print_name = "First Come First Serve"
 
-    def update(self, time):
+    def update(self):
         self.clock = self.simulation.clock
         self.move_to_ready()
         self.handle_done()
@@ -235,14 +219,14 @@ class SJFOld(Scheduler):
         self.sim = sim
         self.print_name = "Shortest Job First OLD"
 
-    def update(self, time):
+    def update(self):
         self.clock = self.simulation.clock
         self.move_to_ready()
         self.schedule_next()
         self.move_to_terminated()
         self.move_to_waiting()
         self.update_running_process()
-        print(f"c: {time}, r: {self.running.length()}, rd: {self.ready_queue.length()}, w: {self.waiting_queue.length()}, n: {self.new_queue.length()}, t: {self.terminated_queue.length()}")
+        print(f"c: {self.clock.get_time()}, r: {self.running.length()}, rd: {self.ready_queue.length()}, w: {self.waiting_queue.length()}, n: {self.new_queue.length()}, t: {self.terminated_queue.length()}")
         self.update_waiting_processes()
 
     def schedule_next(self):
@@ -273,7 +257,7 @@ class SJFOld(Scheduler):
         to_move = []
         pcb: PCB
         for pcb in source_queue._list:
-            if pcb.get_execution_state() == pattern:
+            if pcb.get_execution_state(self.sim.clock.get_time()) == pattern:
                 to_move += [pcb]
         for pcb in to_move:
             if (dest_queue.name == "Ready Queue"):

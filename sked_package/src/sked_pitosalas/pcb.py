@@ -1,3 +1,4 @@
+LOGGING = True
 class PCB:
     """
     Process Control Block (PCB) class represents a process in the operating system.
@@ -12,12 +13,15 @@ class PCB:
         self.burst_pattern = args.get("burst_pattern", None)
         self.priority: int = args.get("priority", 0)
         self.total_time = args.get("total_time", 0)
-        self.start_time = None
+        self.start_time = 0
         self.run_time = 0
-        self.wall_time: int = None
+        self.wall_time: int = 0
         self.wait_time = 0
         self.waiting_time = 0
         self.status = "New"
+
+    def log(self, fstring: str):
+        if LOGGING: print(fstring)
 
     def update(self, time: int) -> None:
         """
@@ -31,14 +35,18 @@ class PCB:
 # process is not advancing in the burst pattern. The wait time is the number of ticks the process
 # has been in the ready queue, not running.
 
-    def get_execution_state(self) -> str:
+    def get_execution_state(self, time: int) -> str:
         if self.burst_pattern is None:
+            print("No burst pattern")
             return None
-        if self.wall_time is None and self.burst_pattern[0] == "ready":
-            self.wall_time = 0
-            return "ready"
+        # if self.wall_time is None and self.burst_pattern[0] == "ready":
+        #     self.wall_time = 0
+        if (time - self.start_time) >= len(self.burst_pattern):
+            state = "terminated"
         else:
-            return self.burst_pattern[self.wall_time-self.wait_time + 1]
+             state = self.burst_pattern[time-self.start_time]
+        self.log(f"get_execution_state:  {state} {self.pid} {time} {self.start_time}")
+        return state
 
     def __repr__(self):
         return f"PCB({self.pid}, {self.arrival_time}, {self.burst_time}, {self.total_time}, {self.wait_time})"

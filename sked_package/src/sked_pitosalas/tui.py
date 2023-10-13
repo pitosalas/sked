@@ -21,7 +21,9 @@ COLUMN_HEADERS = {
       "run_time": "Run Time",
       "wall_time": "Wall Time",
       "wait_time": "Wait Time",
-      "status": "Status"
+      "waiting_time": "Waiting Time",
+      "status": "Status",
+       "burst_pattern": "Burst Pattern"
 }
 
 def generate_intro_rg(sim):
