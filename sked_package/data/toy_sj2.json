@@ -20,7 +20,7 @@
       "pid": "p1",
       "burst_pattern": [
         "ready",
-        "ready",
+        "wait",
         "ready",
         "terminated"
       ]

@@ -34,4 +34,4 @@ class Queue:
         return f"[{', '.join([pcb.pid for pcb in self._list])}]"
     
     def __repr__(self):
-        return f"Queue(\"{self.name}\")"
+        return f"Queue {self.name}"

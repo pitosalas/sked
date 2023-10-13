@@ -23,11 +23,11 @@ class Simulation:
         self.format = "full"
 
     def stepper(self, count):
+        tui.print_status(self)
         for i in range(count):
             self.clock.increment()
             if self.sched.all_processes_done():
                 break
-        tui.print_status(self)
 
     def run(self, live_mode, file_name):
         self.setup_run(file_name)
@@ -44,6 +44,7 @@ class Simulation:
     def run_step(self):
         self.print_intro()
         while not self.sched.all_processes_done():
+            tui.print_status(self)
             response = input("[s(tep),q(uit), g(o): ")
             if response == "q":
                 break

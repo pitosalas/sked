@@ -7,10 +7,13 @@ class Clock:
         self.watchers = []
         self.time = 0
 
+    def log(self, message):
+        if False: print(message)
+
     def increment(self):
-        print(f"Incrementing: {self.time} watchers: {len(self.watchers)}\n" )
         for obj in self.watchers:
             obj.update(self.time)
+        self.log(f"\n***Incrementing: {self.time} watchers: {len(self.watchers)}***\n" )
         self.time += 1
 
     def get_time(self):

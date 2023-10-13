@@ -36,6 +36,8 @@ def print_status(sim) -> None:
     rg = generate_status_rg(sim)
     console = Console()
     console.print(rg)
+    sim.sched.print_queues()
+
 
 def generate_status_rg(sim) -> Group:
     """

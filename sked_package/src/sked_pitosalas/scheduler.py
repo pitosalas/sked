@@ -112,6 +112,9 @@ class Scheduler(ABC):
     def print_queues(self):
         print(f"run: {self.running.pids_string()}, ready: {self.ready_queue.pids_string()}, wait: {self.waiting_queue.pids_string()}, nw: {self.new_queue.pids_string()}, term: {self.terminated_queue.pids_string()}")
 
+    def log(self, fstring: str):
+        if False: print(fstring)
+
     @abstractmethod
     def update(self, time):
         pass
@@ -138,12 +141,12 @@ class SJF(Scheduler):
         to_move_to_ready = []
         to_move_to_waiting = []
         for pcb in queue._list:
-            print(f"checking {pcb.pid} in {queue}")
+            self.log(f"checking {pcb.pid} in {queue}")
             if pcb.get_execution_state() == "ready" and not queue.name == "Ready Queue" and not queue.name == "Running":
-                print(f"moving {pcb.pid} from {queue} to ready queue")
+                self.log(f"moving {pcb.pid} from {queue} to ready queue")
                 to_move_to_ready += [pcb]
             elif pcb.get_execution_state() == "wait" and not queue.name == "Waiting Queue":
-                print(f"moving {pcb.pid} from {queue} to waiting queue")
+                self.log(f"moving {pcb.pid} from {queue} to waiting queue")
                 to_move_to_waiting += [pcb]
         for pcb in to_move_to_ready:
             self.ready_queue.add_at_end(queue.remove(pcb))
@@ -151,22 +154,20 @@ class SJF(Scheduler):
             self.waiting_queue.add_at_end(queue.remove(pcb))
 
     def update(self, time):
-        print(f"Scheduler clock time: {self.simulation.clock.get_time()}")
+        self.log(f"***Start of scheduler update: {self.simulation.clock.get_time()}")
         self.clock = self.simulation.clock
         self.move_to_queue_based_on_execution_state(self.new_queue)
         self.move_to_queue_based_on_execution_state(self.waiting_queue)
         self.move_to_queue_based_on_execution_state(self.running)
         self.move_to_queue_based_on_execution_state(self.ready_queue)
 
-    # Check the process in the Running queue. If it's corresponding burst pattern is "terminated",
-    # then remove it from the running queue and add it to the terminated queue.
         running: PCB = self.running.head
         if running is not None:
             if running.get_execution_state() == "terminated":
                 self.terminated_queue.add_at_end(self.running.remove(running))
             elif running.get_execution_state() == "wait":
                 self.waiting_queue.add_at_end(self.running.remove(running))
-        else:
+        elif not self.ready_queue.empty():
             process_to_run = self.ready_queue.remove_from_front()
             self.running.add_at_end(process_to_run)
 
@@ -188,7 +189,7 @@ class SJF(Scheduler):
     # Go through all running and waiting processes to update their statistics
         self.update_running_process()
         self.update_waiting_processes()
-        self.print_queues()
+        self.log(f"***End of update*** {self.simulation.clock.get_time()}")
 
 
 class RR(Scheduler):
