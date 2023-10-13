@@ -66,7 +66,7 @@ class Scheduler(ABC):
             running.start_time = self.clock.get_time()
         self.progress += f"{running.pid}|"
 
-    def update_running_process_with_preemption(self):
+    def update_running_process_with_quantum(self):
         # if quantum has elapsed
         if self.quantum_elapsed():
             # if there is a running process, check if it is done
@@ -110,6 +110,9 @@ class Scheduler(ABC):
         else:
             return float(total) / len(self.terminated_queue._list)
 
+    def print_queues(self):
+        print(f"run: {self.running.pids_string()}, ready: {self.ready_queue.pids_string()}, wait: {self.waiting_queue.pids_string()}, nw: {self.new_queue.pids_string()}, term: {self.terminated_queue.pids_string()}")
+
     @abstractmethod
     def update(self, time):
         pass
@@ -128,11 +131,10 @@ class SJF(Scheduler):
         for pcb in to_move:
             if (dest_queue.name == "Ready Queue"):
                 if pcb.start_time is None:
-                    pcb.start_time = self.clock.get_time()
+                    pcb.start_time = self.sim.clock.get_time()
             dest_queue.add_at_end(source_queue.remove(pcb))
 
     def update(self, time):
-        self.clock = self.simulation.clock
 
     # Go through all processes on the new queue and check whether their corresponding
     # burst pattern is "ready" at the current time. If so, add them to the end of ready queue.
@@ -170,7 +172,7 @@ class SJF(Scheduler):
     # Go through all running and waiting processes to update their statistics
         self.update_running_process()
         self.update_waiting_processes()
-        print(f"c: {time}, r: {self.running.length()}, rd: {self.ready_queue.length()}, w: {self.waiting_queue.length()}, n: {self.new_queue.length()}, t: {self.terminated_queue.length()}")
+        self.print_queues()
 
 class RR(Scheduler):
     def __init__(self, sim):

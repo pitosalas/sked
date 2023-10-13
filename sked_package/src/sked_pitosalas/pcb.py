@@ -38,7 +38,8 @@ class PCB:
             self.wall_time = 0
             return "ready"
         else:
-            return self.burst_pattern[self.wall_time-self.wait_time]
+            return self.burst_pattern[self.wall_time-self.wait_time + 1]
 
     def __repr__(self):
         return f"PCB({self.pid}, {self.arrival_time}, {self.burst_time}, {self.total_time}, {self.wait_time})"
+    
