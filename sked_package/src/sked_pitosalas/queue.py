@@ -16,7 +16,7 @@ class Queue:
     def remove(self, pcb):
         self._list.remove(pcb)
         return pcb
-    
+
     def length(self):
         return len(self._list)
 
@@ -24,7 +24,7 @@ class Queue:
         return len(self._list) == 0
 
     @property
-    def head(self): 
+    def head(self):
         if len(self._list) > 0:
             return self._list[0]
         else:
