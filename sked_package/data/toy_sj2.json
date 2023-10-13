@@ -28,7 +28,7 @@
     {
       "pid": "p2",
       "burst_pattern": [
-        "ready",
+        "wait",
         "ready",
         "ready",
         "terminated"
