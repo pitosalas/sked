@@ -154,18 +154,35 @@ class SJF(Scheduler):
         for pcb in to_move_to_waiting:
             self.waiting_queue.add_at_end(queue.remove(pcb))
 
+    def manage_running_process(self):
+        running: PCB = self.running.head
+        if running is not None:
+            if running.get_execution_state(self.sim.clock.get_time()) == "terminated":
+                self.terminated_queue.add_at_end(self.running.remove(running))
+            elif running.get_execution_state(self.sim.clock.get_time()) == "wait":
+                self.waiting_queue.add_at_end(self.running.remove(running))
+        elif not self.ready_queue.empty():
+            process_to_run = self.ready_queue.remove_from_front()
+            self.running.add_at_end(process_to_run)
+
     def prepare(self, clock):
         self.log(f"***Scheduler Prepare")
         self.move_to_queue_based_on_execution_state(self.new_queue)
         self.move_to_queue_based_on_execution_state(self.waiting_queue)
-
+        self.move_to_queue_based_on_execution_state(self.ready_queue)
+        self.manage_running_process()
 
     def update(self, time):
         self.log(f"***Start of scheduler update: {self.simulation.clock.get_time()}")
+
+        self.update_running_process()
+        self.update_waiting_processes()
+
+
         self.move_to_queue_based_on_execution_state(self.new_queue)
         self.move_to_queue_based_on_execution_state(self.waiting_queue)
-        self.move_to_queue_based_on_execution_state(self.running)
         self.move_to_queue_based_on_execution_state(self.ready_queue)
+        self.move_to_queue_based_on_execution_state(self.running)
 
         running: PCB = self.running.head
         if running is not None:
@@ -177,8 +194,6 @@ class SJF(Scheduler):
             process_to_run = self.ready_queue.remove_from_front()
             self.running.add_at_end(process_to_run)
 
-        self.update_running_process()
-        self.update_waiting_processes()
         self.log(f"***End of update*** {self.simulation.clock.get_time()}")
 
 

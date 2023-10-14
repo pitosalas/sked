@@ -67,6 +67,7 @@ class Simulation:
         self.configure_scheduler(self.data)
         self.print_intro()
         self.sched.prepare(self.clock)
+        tui.print_status(self)
 
     def run_live(self):
         Console().clear()
