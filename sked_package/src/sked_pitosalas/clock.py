@@ -12,10 +12,10 @@ class Clock:
         if LOGGING: print(message)
 
     def increment(self):
-        for obj in self.watchers:
+       self.log(f"\n***Incrementing: from {self.time} to {self.time+1} watchers: {len(self.watchers)}***\n" )
+       self.time += 1
+       for obj in self.watchers:
             obj.update(self.time)
-        self.log(f"\n***Incrementing: from {self.time} to {self.time+1} watchers: {len(self.watchers)}***\n" )
-        self.time += 1
 
     def get_time(self):
         return self.time

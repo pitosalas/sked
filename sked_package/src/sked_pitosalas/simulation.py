@@ -20,7 +20,6 @@ ALLOWED_KEYS = [
 class Simulation:
     def __init__(self):
         self.clock = Clock()
-        self.format = "full"
 
     def stepper(self, count):
         for i in range(count):
@@ -42,8 +41,6 @@ class Simulation:
         tui.print_summary(self)
     
     def run_step(self):
-        self.print_intro()
-        self.sched.update(self.clock)
         while not self.sched.all_processes_done():
             response = input("[s(tep),q(uit), g(o): ")
             if response == "q":
@@ -68,6 +65,8 @@ class Simulation:
         self.construct_scheduler()
         self.clock.register_object(self.sched)
         self.configure_scheduler(self.data)
+        self.print_intro()
+        self.sched.prepare(self.clock)
 
     def run_live(self):
         Console().clear()
@@ -84,7 +83,6 @@ class Simulation:
         algo = self.data["sched_algorithm"]
         if algo == "FCFS":
             self.sched = FCFS(self)
-            print(self.sched.print_name)
         elif algo == "SJF":
             self.sched = SJF(self)
         elif algo == "RR":
@@ -95,7 +93,6 @@ class Simulation:
     def prompt_for_filename(self):
         console = Console()
         files = [f.name for f in Path("data").glob("*.json")]
-
         console.print("[bold]Select a file:[/bold]")
         for i, f in enumerate(files, 1):
             print(f"[{i}] {f}")
@@ -122,19 +119,19 @@ class Simulation:
         self.quantum = data.get("quantum", 1)
         self.sched_algorithm = data["sched_algorithm"]
         self.display = data["display"]
-        # if there is a key "manual", then we  each process separately.
+
+# if there is a key "manual", then we  each process separately.
         for process in data["manual"]:
             pid = process["pid"]
-            arrival_time = process.get("arrival_time", None)
-            burst_time = process.get("burst_time", None)
-            total_time = process.get("total_time", None)
             priority = process.get("priority", None)
             burst_pattern = process.get("burst_pattern", None)
-            process = { "pid": pid, "arrival_time": arrival_time, "burst_time": burst_time, "total_time": total_time, "priority": priority, "burst_pattern": burst_pattern}
+            process = { "pid": pid, "priority": priority, "burst_pattern": burst_pattern}
+            self.log(process)
             pcb = PCB(process)
             self.sched.new_queue.add_at_end(pcb)
             self.clock.register_object(pcb)
-        # if there is a key "auto", then we generate the processes randomly.
+
+# if there is a key "auto", then we generate the processes randomly.
         pid = 0
         auto = data.get("auto", None)
         if auto:

@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from pcb import PCB
 
 LOGGING = True
+
 class Scheduler(ABC):
     def __init__(self, sim):
         self.new_queue = Queue("New", sim)
@@ -153,9 +154,14 @@ class SJF(Scheduler):
         for pcb in to_move_to_waiting:
             self.waiting_queue.add_at_end(queue.remove(pcb))
 
+    def prepare(self, clock):
+        self.log(f"***Scheduler Prepare")
+        self.move_to_queue_based_on_execution_state(self.new_queue)
+        self.move_to_queue_based_on_execution_state(self.waiting_queue)
+
+
     def update(self, time):
         self.log(f"***Start of scheduler update: {self.simulation.clock.get_time()}")
-        self.clock = self.simulation.clock
         self.move_to_queue_based_on_execution_state(self.new_queue)
         self.move_to_queue_based_on_execution_state(self.waiting_queue)
         self.move_to_queue_based_on_execution_state(self.running)
