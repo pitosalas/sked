@@ -139,15 +139,16 @@ class SJF(Scheduler):
             dest_queue.add_at_end(source_queue.remove(pcb))
 
     def move_to_queue_based_on_execution_state(self, queue):
+        self.log(f"[move_to_queue_based_on_execution_state] Checking {queue.name} for processes to move")
         to_move_to_ready = []
         to_move_to_waiting = []
         for pcb in queue._list:
-            self.log(f"checking {pcb.pid}({pcb.get_execution_state(self.sim.clock.get_time())}) in {queue}")
+            self.log(f"  checking {pcb.pid}({pcb.get_execution_state(self.sim.clock.get_time())}) in {queue}")
             if (pcb.get_execution_state(self.sim.clock.get_time()) == "ready") and not (queue.name == "Ready Queue" or queue.name == "Running"):
-                self.log(f"moving {pcb.pid} from {queue} to ready queue")
+                self.log(f"  moving {pcb.pid} from {queue} to ready queue")
                 to_move_to_ready += [pcb]
             elif pcb.get_execution_state(self.sim.clock.get_time()) == "wait" and not queue.name == "Waiting Queue":
-                self.log(f"moving {pcb.pid} from {queue} to waiting queue")
+                self.log(f"  moving {pcb.pid} from {queue} to waiting queue")
                 to_move_to_waiting += [pcb]
         for pcb in to_move_to_ready:
             self.ready_queue.add_at_end(queue.remove(pcb))
@@ -157,42 +158,37 @@ class SJF(Scheduler):
     def manage_running_process(self):
         running: PCB = self.running.head
         if running is not None:
-            if running.get_execution_state(self.sim.clock.get_time()) == "terminated":
+            running_xstate = running.get_execution_state(self.sim.clock.get_time())
+            self.log(f"[manage_running_process] Checking running process {running.pid}({running_xstate})")
+            if running_xstate == "terminated":
                 self.terminated_queue.add_at_end(self.running.remove(running))
             elif running.get_execution_state(self.sim.clock.get_time()) == "wait":
                 self.waiting_queue.add_at_end(self.running.remove(running))
-        elif not self.ready_queue.empty():
+        if not self.ready_queue.empty() and self.running.empty():
             process_to_run = self.ready_queue.remove_from_front()
+            self.log(f"  Moving {process_to_run.pid} from ready queue to running")
             self.running.add_at_end(process_to_run)
 
     def prepare(self, clock):
-        self.log(f"***Scheduler Prepare")
+        self.log(f"[prepare] ***Scheduler Prepare")
         self.move_to_queue_based_on_execution_state(self.new_queue)
         self.move_to_queue_based_on_execution_state(self.waiting_queue)
         self.move_to_queue_based_on_execution_state(self.ready_queue)
         self.manage_running_process()
+        self.log(f"[prepare] *** Finished cheduler Prepare")
 
     def update(self, time):
-        self.log(f"***Start of scheduler update: {self.simulation.clock.get_time()}")
+        self.log(f"***[update] Start of scheduler update: {self.simulation.clock.get_time()}")
 
         self.update_running_process()
         self.update_waiting_processes()
-
 
         self.move_to_queue_based_on_execution_state(self.new_queue)
         self.move_to_queue_based_on_execution_state(self.waiting_queue)
         self.move_to_queue_based_on_execution_state(self.ready_queue)
         self.move_to_queue_based_on_execution_state(self.running)
-
-        running: PCB = self.running.head
-        if running is not None:
-            if running.get_execution_state(self.sim.clock.get_time()) == "terminated":
-                self.terminated_queue.add_at_end(self.running.remove(running))
-            elif running.get_execution_state(self.sim.clock.get_time()) == "wait":
-                self.waiting_queue.add_at_end(self.running.remove(running))
-        elif not self.ready_queue.empty():
-            process_to_run = self.ready_queue.remove_from_front()
-            self.running.add_at_end(process_to_run)
+        self.move_to_queue_based_on_execution_state(self.terminated_queue)
+        self.manage_running_process()
 
         self.log(f"***End of update*** {self.simulation.clock.get_time()}")
 

@@ -45,7 +45,7 @@ class PCB:
             state = "terminated"
         else:
             state = self.burst_pattern[time-self.wait_time]
-        self.log(f"get_execution_state:  {state} {self.pid} t:{time} , start_time: {self.start_time}, wait_time: {self.wait_time}")
+        self.log(f"   get_execution_state:  {state} {self.pid} t:{time} , start_time: {self.start_time}, wait_time: {self.wait_time}")
         return state
 
     def __repr__(self):
