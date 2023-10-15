@@ -1,4 +1,6 @@
-LOGGING = True
+LOGGING = False
+
+
 class PCB:
     """
     Process Control Block (PCB) class represents a process in the operating system.
@@ -21,7 +23,8 @@ class PCB:
         self.status = "New"
 
     def log(self, fstring: str):
-        if LOGGING: print(fstring)
+        if LOGGING:
+            print(fstring)
 
     def update(self, time: int) -> None:
         """
@@ -41,13 +44,13 @@ class PCB:
             return None
         # if self.wall_time is None and self.burst_pattern[0] == "ready":
         #     self.wall_time = 0
-        if (time - self.start_time) >= len(self.burst_pattern):
-            state = "terminated"
+        if (time - self.wait_time) >= len(self.burst_pattern):
+            state = "exit"
         else:
             state = self.burst_pattern[time-self.wait_time]
-        self.log(f"   get_execution_state:  {state} {self.pid} t:{time} , start_time: {self.start_time}, wait_time: {self.wait_time}")
+        self.log(
+            f"   get_execution_state: {self.pid}({state})  t:{time} , run_time: {self.run_time} start_time: {self.start_time}, wait_time: {self.wait_time}")
         return state
 
     def __repr__(self):
         return f"PCB({self.pid}, {self.arrival_time}, {self.burst_time}, {self.total_time}, {self.wait_time})"
-    

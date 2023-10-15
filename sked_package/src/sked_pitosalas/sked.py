@@ -25,7 +25,8 @@ DOC = """
 * Once the simulation starts, each process tracks the following
     * Run Time: Number of CPU tics the process has used so far ("run")
     * Wall Time: Number of tics since the process was first run until it terminates ("wall")
-    * Wait Time: Total tics a process spends waiting (on ready queues) ("wait")
+    * Wait Time: Total tics a process spends waiting (on ready queue) ("wait")
+    * Waiting Time: Total tics a process spends waiting for I/O or other resources ("waiting")
     * Start Time: Time(tics) when the process was first run ("start")
 
 * When the simulation completes the following are calculated:
@@ -36,15 +37,19 @@ DOC = """
 HELP = """
 Use this little tool to experiment with and demonstrate different scheduling algorithms. It is open source and a work in progress so expect bugs and help us fix them!
 """
+
+
 def cli():
     print(f"Welcome! to Sked")
     parser = argparse.ArgumentParser(description='Simple scheduler CLI')
 
-    parser.add_argument('-d', '--doc', action='store_true', help='Print documentation')
+    parser.add_argument('-d', '--doc', action='store_true',
+                        help='Print documentation')
     parser.add_argument('-l', '--live', action='store_true', help='Live mode')
-    parser.add_argument('-p', '--prompt', action='store_true', help='Prompt mode')
+    parser.add_argument(
+        '-p', '--prompt', action='store_true', help='Prompt mode')
     parser.add_argument('-f', '--file', type=str, help='File path')
-    args = parser.parse_args() 
+    args = parser.parse_args()
 
     live_mode = args.live
     file_name = args.file
@@ -61,6 +66,6 @@ def cli():
     s = Simulation()
     s.run(live_mode, file_name)
 
+
 if __name__ == "__main__":
     cli()
-

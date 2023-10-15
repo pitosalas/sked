@@ -19,17 +19,17 @@
     {
       "pid": "p1",
       "burst_pattern": [
-        "ready",
-        "ready",
-        "terminated"
+        "cpu",
+        "cpu",
+        "exit"
       ]
     },
     {
       "pid": "p2",
       "burst_pattern": [
-        "ready",
-        "waiting",
-        "terminated"
+        "cpu",
+        "i/o",
+        "exit"
       ]
     }
   ]

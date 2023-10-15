@@ -2,7 +2,8 @@ from queue import Queue
 from abc import ABC, abstractmethod
 from pcb import PCB
 
-LOGGING = True
+LOGGING = False
+
 
 class Scheduler(ABC):
     def __init__(self, sim):
@@ -78,11 +79,9 @@ class Scheduler(ABC):
 
     def update_waiting_processes(self):
         for waiting in self.waiting_queue._list:
-            waiting.wait_time += 1
             waiting.waiting_time += 1
         for ready in self.ready_queue._list:
             ready.wait_time += 1
-            ready.waiting_time += 1
             if ready.start_time is None:
                 ready.start_time = self.clock.get_time()
 
@@ -114,7 +113,8 @@ class Scheduler(ABC):
         print(f"run: {self.running.pids_string()}, ready: {self.ready_queue.pids_string()}, wait: {self.waiting_queue.pids_string()}, nw: {self.new_queue.pids_string()}, term: {self.terminated_queue.pids_string()}")
 
     def log(self, fstring: str):
-        if LOGGING: print(fstring)
+        if LOGGING:
+            print(fstring)
 
     @abstractmethod
     def update(self, time):
@@ -139,34 +139,51 @@ class SJF(Scheduler):
             dest_queue.add_at_end(source_queue.remove(pcb))
 
     def move_to_queue_based_on_execution_state(self, queue):
-        self.log(f"[move_to_queue_based_on_execution_state] Checking {queue.name} for processes to move")
+        self.log(
+            f"[move_to_queue_based_on_execution_state] Checking {queue.name} for processes to move")
         to_move_to_ready = []
         to_move_to_waiting = []
+        to_move_exit = []
         for pcb in queue._list:
-            self.log(f"  checking {pcb.pid}({pcb.get_execution_state(self.sim.clock.get_time())}) in {queue}")
-            if (pcb.get_execution_state(self.sim.clock.get_time()) == "ready") and not (queue.name == "Ready Queue" or queue.name == "Running"):
-                self.log(f"  moving {pcb.pid} from {queue} to ready queue")
+            exec_state = pcb.get_execution_state(self.sim.clock.get_time())
+            self.log(f"   checking {pcb.pid}({exec_state}) in {queue}")
+            if exec_state == "cpu" and not (queue.name == "Ready Queue" or queue.name == "Running"):
+                self.log(f"   moving {pcb.pid} from {queue} to ready queue")
                 to_move_to_ready += [pcb]
-            elif pcb.get_execution_state(self.sim.clock.get_time()) == "wait" and not queue.name == "Waiting Queue":
-                self.log(f"  moving {pcb.pid} from {queue} to waiting queue")
+            elif exec_state == "i/o" and not queue.name == "Waiting Queue":
+                self.log(f"   moving {pcb.pid} from {queue} to waiting queue")
                 to_move_to_waiting += [pcb]
+            elif exec_state == "exit" and not queue.name == "Terminated":
+                self.log(f"   moving {pcb.pid} from {queue} to terminated")
+                to_move_exit += [pcb]
+            elif exec_state == "exit" and not queue.name == "Terminated":
+                self.log(f"   moving {pcb.pid} from {queue} to terminated")
+                to_move_exit += [pcb]
+
         for pcb in to_move_to_ready:
             self.ready_queue.add_at_end(queue.remove(pcb))
         for pcb in to_move_to_waiting:
             self.waiting_queue.add_at_end(queue.remove(pcb))
+        for pcb in to_move_exit:
+            self.terminated_queue.add_at_end(queue.remove(pcb))
+        self.log(
+            f"   exit")
 
     def manage_running_process(self):
         running: PCB = self.running.head
         if running is not None:
-            running_xstate = running.get_execution_state(self.sim.clock.get_time())
-            self.log(f"[manage_running_process] Checking running process {running.pid}({running_xstate})")
-            if running_xstate == "terminated":
+            running_xstate = running.get_execution_state(
+                self.sim.clock.get_time())
+            self.log(
+                f"[manage_running_process] Checking running process {running.pid}({running_xstate})")
+            if running_xstate == "exit":
                 self.terminated_queue.add_at_end(self.running.remove(running))
-            elif running.get_execution_state(self.sim.clock.get_time()) == "wait":
+            elif running.get_execution_state(self.sim.clock.get_time()) == "i/o":
                 self.waiting_queue.add_at_end(self.running.remove(running))
         if not self.ready_queue.empty() and self.running.empty():
             process_to_run = self.ready_queue.remove_from_front()
-            self.log(f"  Moving {process_to_run.pid} from ready queue to running")
+            self.log(
+                f"  Moving {process_to_run.pid} from ready queue to running")
             self.running.add_at_end(process_to_run)
 
     def prepare(self, clock):
@@ -178,7 +195,8 @@ class SJF(Scheduler):
         self.log(f"[prepare] *** Finished cheduler Prepare")
 
     def update(self, time):
-        self.log(f"***[update] Start of scheduler update: {self.simulation.clock.get_time()}")
+        self.log(
+            f"***[update] Start of scheduler update: {self.simulation.clock.get_time()}")
 
         self.update_running_process()
         self.update_waiting_processes()
@@ -252,7 +270,7 @@ class SJFOld(Scheduler):
 
         # Go through all processes on the new queue and check whether their corresponding
         # burst pattern is "ready" at the current time. If so, add them to the end of ready queue.
-        self.move_based_on_pattern(self.new_queue, "ready", self.ready_queue)
+        self.move_based_on_pattern(self.new_queue, "cpu", self.ready_queue)
 
         # Check the process in the Running queue. If it's corresponding burst pattern is "terminated",
         # then remove it from the running queue and add it to the terminated queue.
