@@ -1,0 +1,27 @@
+We are solving a problem in CPU scheduling algorithms. We are looking at shortest job first algorithm. I will give you information describing the behavior of one or more threads. It will take the form of 8 values for each thread. 
+
+The first value is the name of the thread.
+
+The next 7 values would be in Ticks. They will represent 7 phases in the thread execution: run, I/o, run, I/o, run, I/o, run.
+
+So a line that had the following info: “P1 1 2 2 3 4 1 1” would mean that thread 1 would arrive at tick 1, run for 2 ticks, do I/o for 2 ticks, run for 2 ticks, do I/o for 3 ticks, run for 4 ticks, do I/o for 1 tick run for 1 ticks. So its time line would be:
+
+0: not started
+1: 
+2: running
+3: I/o
+4: I/o
+5: running
+6: running
+7: I/o
+8: I/o
+9: I/o
+10: running
+11: running
+12: running
+13: running
+14: I/o
+15: running
+16: terminated
+
+We want the scheduling to follow the Shortest Job First algorithm. When a thread wants to run but another is running, that thread goes on the ready queue. When a thread is doing I/o it goes on the waiting queue.
