@@ -4,7 +4,8 @@ PROCESS_IT = 0
 FIRST_TIME = 1
 NEXT_TICK = 2
 LOCAL_TICK = 3
-LOGGING = [False, False, False, False]
+JOBSIZE = 4
+LOGGING = [True, False, True, False, False]
 
 
 class SJF:
@@ -70,12 +71,16 @@ class SJF:
             elif self.get_local_state(index, tick) == 'i':
                 new_entry.append(['i', 0])
             else:
-                new_entry.append(['-', 0])
+                new_entry.append(['x', 0])
         self.log(NEXT_TICK, f"Proposed next tick:{new_entry}\n")
         self.timeline.append(new_entry)
 
     def get_local_state(self, process, tick):
-        return self.local_timeline[process][tick-self.timeline[tick-1][process][1]]
+        self.log(NEXT_TICK, f"Get local state for process {process} at tick {tick}")
+        if len(self.local_timeline[process]) <= tick-self.timeline[tick-1][process][1]:
+            return 'x'
+        else:
+            return self.local_timeline[process][tick-self.timeline[tick-1][process][1]]
 
     def determine_run_text_tick(self):
         if self.running is not None and self.timeline[self.tick][self.running][0] == 'c':
@@ -101,26 +106,34 @@ class SJF:
                 self.timeline[self.tick][try_running][0] = 'c'
                 self.update_local_tick_offsets(try_running)
 
-    def job_size(self, current_tick, process):
+    def job_size(self, current_tick, target_process):
         burst_size = 0
         in_burst = False
         burst_sizes = []
-        for index, entry in self.timeline:
-            if entry[process] == 'c' and not in_burst:
+        for tick_row in self.timeline:
+            if tick_row[target_process][0] == 'c' and not in_burst:
+            # entered burst
                 burst_size += 1
                 in_burst = True
-            elif entry[process] == 'c' and in_burst:
+            elif tick_row[target_process][0] == 'c' and in_burst:
+            # in burst
                 burst_size += 1
-            elif entry[process] != 'c' and in_burst:
+            elif tick_row[target_process][0] != 'c' and in_burst:
+            # exited burst
                 burst_sizes.append(burst_size)
                 burst_size = 0
                 in_burst = False
-            elif entry[process] != 'c' and not in_burst:
+            elif tick_row[target_process][0] != 'c' and not in_burst:
                 pass
             else:
                 raise Exception('Should not be here')
-            print(f'burst_sizes:{burst_sizes}')
-            return 1
+        burst_sizes.append(burst_size)
+        last_estimate = 5
+        for burst in burst_sizes:
+            last_estimate = (burst + last_estimate)/2
+        self.log(JOBSIZE, f"Last estimate {last_estimate}")
+        return last_estimate
+
 
     # for all processes other than skip_process, we take the local tick offset from the previous tick
     # and add one to it. For the skip_process, we just copy the local tuck offset.
@@ -145,13 +158,19 @@ class SJF:
 
     def flatten_chain(self, matrix):
         return list(chain.from_iterable(matrix))
+    
+    def still_running(self):
+        for process in self.timeline[self.tick]:
+            if process[0] != 'x':
+                return True
+        return False
 
 
 if __name__ == '__main__':
-    sjf = SJF('data3.csv')
+    sjf = SJF('data0.csv')
     sjf.generate_local_timelime()
     sjf.initialize_time_line()
-    for i in range(15):
+    while sjf.still_running():
         sjf.propose_next_tick()
         sjf.determine_run_text_tick()
     sjf.pretty_print_timeline()
