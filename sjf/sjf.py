@@ -6,7 +6,7 @@ NEXT_TICK = 2
 LOCAL_TICK = 3
 JOBSIZE = 4
 MAINLOOP = 5
-LOGGING = [False, False, True, False, False, False]
+LOGGING = [False, False, True, True, False, False]
 
 
 class SJF:
@@ -62,7 +62,7 @@ class SJF:
 
     def propose_next_tick(self):
         self.log(
-            NEXT_TICK, f"*** ENTER propose_next_tick at tick({self.tick}")
+            NEXT_TICK, f"*** ENTER propose_next_tick at @{self.tick}")
 
         self.tick += 1
         tick = self.tick  # just for convenience
@@ -97,7 +97,7 @@ class SJF:
             local_state = self.local_timeline[process][tick -
                                                        self.timeline[tick-1][process][1]]
         self.log(
-            NEXT_TICK, f"*** EXIT get_local_state #{process} @{tick} returning {local_state}")
+            NEXT_TICK, f"*** EXIT get_local_state #{process} @{tick} returning state: {local_state}")
         return local_state
 
     def determine_run_text_tick(self):
