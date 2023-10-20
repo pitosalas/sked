@@ -6,7 +6,7 @@ NEXT_TICK = 2
 LOCAL_TICK = 3
 JOBSIZE = 4
 MAINLOOP = 5
-LOGGING = [False, False, False, False, False, False]
+LOGGING = [False, False, True, False, False, False]
 
 
 class SJF:
@@ -53,7 +53,7 @@ class SJF:
     def initialize_time_line(self):
         self.log(FIRST_TIME, "*** begin of first time init***")
         first_entry = []
-        self.log(FIRST_TIME, f"Local timeline:{self.local_timeline}")
+        self.log(FIRST_TIME, f"     Local timeline:{self.local_timeline}")
         for index, process in enumerate(self.local_timeline):
             first_entry.append([process[0], 0])
             self.log(FIRST_TIME, first_entry)
@@ -61,13 +61,16 @@ class SJF:
         self.log(FIRST_TIME, "*** end of first time init***")
 
     def propose_next_tick(self):
+        self.log(
+            NEXT_TICK, f"*** ENTER propose_next_tick at tick({self.tick}")
+
         self.tick += 1
         tick = self.tick  # just for convenience
         # first calculate it without regard to the fact that only one process can run at a time
         new_entry = []
         for index, local_state in enumerate(self.local_timeline):
             self.log(
-                NEXT_TICK, f"Propose next process: {index} {self.get_local_state(index, tick)}")
+                NEXT_TICK, f"    Propose next process: {index} state:{self.get_local_state(index, tick)}")
             if self.get_local_state(index, tick) == 'c':
                 new_entry.append(['r', 0])
             elif self.get_local_state(index, tick) == 'i':
@@ -77,33 +80,40 @@ class SJF:
             elif self.get_local_state(index, tick) == 'x':
                 new_entry.append(['x', 0])
             else:
-                raise Exception('Should not be here')
-
-        self.log(NEXT_TICK, f"Proposed next tick:{new_entry}\n")
+                raise Exception('     Should not be here')
         self.timeline.append(new_entry)
+        self.log(
+            NEXT_TICK, f"*** EXIT propose_next_tick at tick({self.tick}) adding: {new_entry} (timeline length {len(self.timeline)}")
 
     def get_local_state(self, process, tick):
+        local_state = None
         self.log(
-            NEXT_TICK, f"Local state process {process} at tick {tick}")
+            NEXT_TICK, f"*** ENTER get_local_state #{process} @{tick}")
         if len(self.local_timeline[process]) <= tick-self.timeline[tick-1][process][1]:
             self.log(
-                NEXT_TICK, f"x: {len(self.local_timeline[process])}, tick: {tick}, offset: {self.timeline[tick-1][process][1]}")
-            return 'x'
+                NEXT_TICK, f"     len_timeline: {len(self.local_timeline[process])}, @{tick}, offset: {self.timeline[tick-1][process][1]}")
+            local_state = 'x'
         else:
-            return self.local_timeline[process][tick-self.timeline[tick-1][process][1]]
+            local_state = self.local_timeline[process][tick -
+                                                       self.timeline[tick-1][process][1]]
+        self.log(
+            NEXT_TICK, f"*** EXIT get_local_state #{process} @{tick} returning {local_state}")
+        return local_state
 
     def determine_run_text_tick(self):
+        self.log(NEXT_TICK, f"*** ENTER determine_run_text_tick @{self.tick}")
         if self.running is not None and self.timeline[self.tick][self.running][0] == 'c':
-            self.log(NEXT_TICK, f'process {self.running} continues running\n')
+            self.log(
+                NEXT_TICK, f'     process {self.running} continues running')
             self.update_local_tick_offsets(self.running)
         else:
             try_running = None
             estimated_size = -1
             current_tick = self.timeline[self.tick]
-            self.log(NEXT_TICK, current_tick)
+            self.log(NEXT_TICK, f"     current_tick: {current_tick}")
 
             for index, process in enumerate(current_tick):
-                self.log(NEXT_TICK, f"Process:{index} state: {process}")
+                self.log(NEXT_TICK, f"     Process:{index} state: {process}")
                 if process[0] == 'r':
                     if try_running is None:
                         try_running = index
@@ -111,10 +121,12 @@ class SJF:
                         try_running = index
                         estimated_size = self.job_size(current_tick, index)
             if try_running is not None:
-                self.log(NEXT_TICK, f'process {try_running} begins running\n')
+                self.log(
+                    NEXT_TICK, f'     Process {try_running} begins running')
                 self.running = try_running
                 self.timeline[self.tick][try_running][0] = 'c'
                 self.update_local_tick_offsets(try_running)
+        self.log(NEXT_TICK, "*** EXIT determine_run_text_tick")
 
     def job_size(self, current_tick, target_process):
         burst_size = 0
@@ -145,26 +157,45 @@ class SJF:
             JOBSIZE, f"Job Size for {target_process} during tick {self.tick} is {last_estimate}")
         return last_estimate
 
-    # for all processes other than skip_process, we take the local tick offset from the previous tick
-    # and add one to it. For the skip_process, we just copy the local tuck offset.
+    # for all processes other than skip_process, we take the local tick
+    # offset from the previous tick and add one to it. For the skip_process
+    # we just copy the local tuck offset.
 
     def update_local_tick_offsets(self, skip_process):
-        self.log(LOCAL_TICK, f"Skip Process {skip_process}")
+        self.log(
+            LOCAL_TICK, f"\n*** ENTER Update_local_tick_offsets tick:{self.tick} process:{skip_process}")
         for index, process in enumerate(self.timeline[self.tick]):
             self.log(LOCAL_TICK,
-                     f"Process:{index} state:{process}")
+                     f"      Process:{index} state:{process}")
             if process[0] == 'r' and index != skip_process:
                 self.log(
-                    LOCAL_TICK, f"Process {index} ({process[0]}) needs updated {process[1]}")
-                self.log(
-                    LOCAL_TICK, f"local {self.timeline[self.tick][index][1]}")
+                    LOCAL_TICK, f"      Process {index} ({process[0]}) has local offset:{process[1]} local {self.timeline[self.tick][index][1]}")
                 self.timeline[self.tick][index][1] = self.timeline[self.tick-1][index][1] + 1
+            elif process[0] == 'c' and index != skip_process:
+                new_local_tick = self.timeline[self.tick-1][index][1] - 1
+                if new_local_tick > 0:
+                    self.timeline[self.tick][index][1] = new_local_tick
             elif process[0] == 'r' and index == skip_process:
                 self.timeline[index][self.tick][1] = self.timeline[self.tick-1][index][1]
+            elif process[0] == 'c' and index == skip_process:
+                new_local_tick = self.timeline[self.tick-1][index][1] - 1
+                if new_local_tick > 0:
+                    self.timeline[self.tick][index][1] = new_local_tick
+            else:
+                self.log(LOCAL_TICK, "      Unexpected: No match")
+        self.log(
+            LOCAL_TICK, f"\n*** EXIT Update_local_tick_offsets tick:{self.tick}")
 
     def pretty_print_timeline(self):
+        print("** Timeline:")
         for index, entry in enumerate(self.timeline):
             print(f'tick:{index}: {entry}')
+
+    def pretty_print_local_timeline(self):
+        print("** Local Timeline:")
+        for index, entry in enumerate(self.local_timeline):
+            print(f'process:{index}: {(" ").join(entry)}')
+        print()
 
     def flatten_chain(self, matrix):
         return list(chain.from_iterable(matrix))
@@ -180,9 +211,10 @@ class SJF:
 
 
 if __name__ == '__main__':
-    sjf = SJF('jeremybernstein.csv')
+    sjf = SJF('debbie.csv')
     sjf.generate_local_timelime()
     sjf.initialize_time_line()
+    sjf.pretty_print_local_timeline()
     while sjf.still_running():
         sjf.propose_next_tick()
         sjf.determine_run_text_tick()
