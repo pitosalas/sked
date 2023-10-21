@@ -9,7 +9,7 @@ MAINLOOP = 5
 GETLOCALSTATE = 6
 f = False
 t = True
-LOGGING = [f, t, t, t, f, f, f]
+LOGGING = [f, f, f, f, f, f, f]
 
 
 class SJF:
@@ -85,7 +85,7 @@ class SJF:
             self.log(
                 NEXT_TICK, f"    Propose next process: {index} state:{self.get_local_state(index, tick)}")
             if self.get_local_state(index, tick) == 'c':
-                new_entry.append(['r', 0])
+                new_entry.append(['r', 1])
             elif self.get_local_state(index, tick) == 'i':
                 new_entry.append(['i', 0])
             elif self.get_local_state(index, tick) == '-':
@@ -138,6 +138,7 @@ class SJF:
                     NEXT_TICK, f'     Process {try_running} begins running')
                 self.running = try_running
                 self.timeline[self.tick][try_running][0] = 'c'
+                self.timeline[self.tick][try_running][1] = 0
                 self.update_local_tick_offsets(try_running)
         self.log(NEXT_TICK, "*** EXIT determine_run_text_tick @{self.tick}}")
 
@@ -220,7 +221,7 @@ class SJF:
             if len(process) > max_tick:
                 max_tick = len(process)
         self.log(MAINLOOP, f"{self.tick}, {max_tick}")
-        return self.tick < max_tick
+        return self.tick <= max_tick
 
 
 if __name__ == '__main__':
