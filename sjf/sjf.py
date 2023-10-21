@@ -6,7 +6,10 @@ NEXT_TICK = 2
 LOCAL_TICK = 3
 JOBSIZE = 4
 MAINLOOP = 5
-LOGGING = [False, False, True, True, False, False]
+GETLOCALSTATE = 6
+f = False
+t = True
+LOGGING = [f, t, t, t, f, f, f]
 
 
 class SJF:
@@ -26,12 +29,16 @@ class SJF:
 # The local is a list of lists, indexed by process number, and within that indexed by tick
 
     def generate_local_timelime(self):
+        self.log(PROCESS_IT, "*** BEGIN generate_local_timelime")
         with open(self.filename, 'r') as f:
             for line in f:
                 process_lt = self.process_lt(line)
                 self.local_timeline.append(process_lt)
+        self.log(PROCESS_IT, "*** END generate_local_timelime {self.local_timeline}}")
+
 
     def process_lt(self, line):
+        self.log(PROCESS_IT, "*** BEGIN process_lt")
         process_lt = []
         line_split = line.split(',')
         process_lt.append(int(line_split[0])*['-'])
@@ -41,7 +48,7 @@ class SJF:
         process_lt.append(int(line_split[4])*['i'])
         process_lt.append(int(line_split[5])*['c'])
         process_lt = self.flatten_chain(process_lt)
-        self.log(PROCESS_IT, process_lt)
+        self.log(PROCESS_IT, f"*** END process_lt {process_lt}")
         return process_lt
 
     # timeline is a list with an entry for each process
@@ -51,21 +58,27 @@ class SJF:
     # the local tick offset for that process. This method creates the entry for tick 0
 
     def initialize_time_line(self):
-        self.log(FIRST_TIME, "*** begin of first time init***")
+        self.log(FIRST_TIME, "*** BEGIN initialize_time_line")
         first_entry = []
-        self.log(FIRST_TIME, f"     Local timeline:{self.local_timeline}")
+        any_cpu = False
         for index, process in enumerate(self.local_timeline):
-            first_entry.append([process[0], 0])
-            self.log(FIRST_TIME, first_entry)
+            if process[0] == 'c' and not any_cpu:
+                any_cpu = True
+                first_entry.append(['c', 0])
+            elif process[0] == 'c' and any_cpu:
+                first_entry.append(['r', 1])
+            else:
+                first_entry.append([process[0], 0])
         self.timeline.append(first_entry)
-        self.log(FIRST_TIME, "*** end of first time init***")
+        self.log(FIRST_TIME, f"     Local timeline:{self.local_timeline}")
+        self.log(FIRST_TIME, f"     Timeline:{self.timeline}")
+        self.log(FIRST_TIME, "*** END initialize_time_line")
 
     def propose_next_tick(self):
-        self.log(
-            NEXT_TICK, f"*** ENTER propose_next_tick at @{self.tick}")
-
         self.tick += 1
         tick = self.tick  # just for convenience
+        self.log(
+            NEXT_TICK, f"*** ENTER propose_next_tick at @{self.tick}")
         # first calculate it without regard to the fact that only one process can run at a time
         new_entry = []
         for index, local_state in enumerate(self.local_timeline):
@@ -83,21 +96,21 @@ class SJF:
                 raise Exception('     Should not be here')
         self.timeline.append(new_entry)
         self.log(
-            NEXT_TICK, f"*** EXIT propose_next_tick at tick({self.tick}) adding: {new_entry} (timeline length {len(self.timeline)}")
+            NEXT_TICK, f"*** EXIT propose_next_tick @{self.tick} adding: {new_entry} (len timeline: {len(self.timeline)})")
 
     def get_local_state(self, process, tick):
         local_state = None
         self.log(
-            NEXT_TICK, f"*** ENTER get_local_state #{process} @{tick}")
+            GETLOCALSTATE, f"*** ENTER get_local_state #{process} @{tick}")
         if len(self.local_timeline[process]) <= tick-self.timeline[tick-1][process][1]:
             self.log(
-                NEXT_TICK, f"     len_timeline: {len(self.local_timeline[process])}, @{tick}, offset: {self.timeline[tick-1][process][1]}")
+                GETLOCALSTATE, f"     len_timeline: {len(self.local_timeline[process])}, @{tick}, offset: {self.timeline[tick-1][process][1]}")
             local_state = 'x'
         else:
             local_state = self.local_timeline[process][tick -
                                                        self.timeline[tick-1][process][1]]
         self.log(
-            NEXT_TICK, f"*** EXIT get_local_state #{process} @{tick} returning state: {local_state}")
+            GETLOCALSTATE, f"*** EXIT get_local_state #{process} @{tick} returning state: {local_state}")
         return local_state
 
     def determine_run_text_tick(self):
@@ -126,7 +139,7 @@ class SJF:
                 self.running = try_running
                 self.timeline[self.tick][try_running][0] = 'c'
                 self.update_local_tick_offsets(try_running)
-        self.log(NEXT_TICK, "*** EXIT determine_run_text_tick")
+        self.log(NEXT_TICK, "*** EXIT determine_run_text_tick @{self.tick}}")
 
     def job_size(self, current_tick, target_process):
         burst_size = 0
@@ -163,7 +176,7 @@ class SJF:
 
     def update_local_tick_offsets(self, skip_process):
         self.log(
-            LOCAL_TICK, f"\n*** ENTER Update_local_tick_offsets tick:{self.tick} process:{skip_process}")
+            LOCAL_TICK, f"*** ENTER Update_local_tick_offsets @:{self.tick} running #{skip_process}")
         for index, process in enumerate(self.timeline[self.tick]):
             self.log(LOCAL_TICK,
                      f"      Process:{index} state:{process}")
@@ -184,15 +197,15 @@ class SJF:
             else:
                 self.log(LOCAL_TICK, "      Unexpected: No match")
         self.log(
-            LOCAL_TICK, f"\n*** EXIT Update_local_tick_offsets tick:{self.tick}")
+            LOCAL_TICK, f"*** EXIT Update_local_tick_offsets @{self.tick}")
 
     def pretty_print_timeline(self):
-        print("** Timeline:")
+        print("TIMELINE:")
         for index, entry in enumerate(self.timeline):
             print(f'tick:{index}: {entry}')
 
     def pretty_print_local_timeline(self):
-        print("** Local Timeline:")
+        print("LOCAL TIMELINE")
         for index, entry in enumerate(self.local_timeline):
             print(f'process:{index}: {(" ").join(entry)}')
         print()
@@ -211,7 +224,7 @@ class SJF:
 
 
 if __name__ == '__main__':
-    sjf = SJF('debbie.csv')
+    sjf = SJF('data0.csv')
     sjf.generate_local_timelime()
     sjf.initialize_time_line()
     sjf.pretty_print_local_timeline()
