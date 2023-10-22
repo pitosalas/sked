@@ -64,7 +64,8 @@ class SJF:
     def propose_next_tick(self):
         new_entry = []
         for index, local_state in enumerate(self.local_timeline):
-            new_entry.append([self.get_local_state(index, self.tick), 0])
+            new_entry.append([self.get_local_state(
+                index, self.tick), self.timeline[self.tick-1][index][1]])
         self.timeline.append(new_entry)
 
     def get_local_state(self, process, tick):
@@ -92,7 +93,7 @@ class SJF:
             if try_running is not None:
                 self.running = try_running
                 self.timeline[self.tick][try_running][0] = 'c'
-                self.timeline[self.tick][try_running][1] = 0
+                self.timeline[self.tick][try_running][1] = self.timeline[self.tick-1][try_running][1]
                 self.update_local_tick_offsets(try_running)
 
     def job_size(self, current_tick, target_process):
@@ -175,7 +176,8 @@ class SJF:
         return list(chain.from_iterable(matrix))
 
     def still_running(self):
-        for process in self.timeline:
+        curr_tick = self.timeline[self.tick]
+        for process in curr_tick:
             if process[0] != 'x':
                 return True
         return False
@@ -186,7 +188,7 @@ if __name__ == '__main__':
     sjf.generate_local_timelime()
     sjf.initialize_time_line()
     sjf.pretty_print_local_timeline()
-    for i in range(40):
+    while sjf.still_running():
         sjf.tick += 1
         sjf.propose_next_tick()
         sjf.determine_run_text_tick()
