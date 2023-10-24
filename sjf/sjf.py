@@ -182,14 +182,43 @@ class SJF:
                 return True
         return False
 
+    def print_running_sequence(self):
+        print("\n**** RUNNING SEQUENCE\n")
+        for tick, tick_data in enumerate(self.timeline):
+            running = None
+            for process, process_data in enumerate(tick_data):
+                if process_data[0] == 'c' and running is None:
+                    running = process
+                    print (f"Tick {tick}: Process {process} runs.")
+                elif process_data[0] == 'c' and running != None:
+                    print (f"Bug at tick {tick}: Process {process} wants to run, but process {running} is already running.")
+            if (running is None):
+                print(f"Tick {tick}: No Process is running")
 
+    def print_statistics(self):
+        print("\n**** STATISTICS\n")
+        wait_time = [0, 0, 0]
+        for tick, tick_data in enumerate(self.timeline):
+            for process, process_data in enumerate(tick_data):
+                if process_data[0] == 'r':
+                    wait_time[process] += 1
+        print(f"Waiting time for each Process: {wait_time}")
+                
+        
 if __name__ == '__main__':
-    sjf = SJF('debbie.csv')
-    sjf.generate_local_timelime()
-    sjf.initialize_time_line()
-    sjf.pretty_print_local_timeline()
-    while sjf.still_running():
-        sjf.tick += 1
-        sjf.propose_next_tick()
-        sjf.determine_run_text_tick()
-    sjf.pretty_print_timeline()
+    from pathlib import Path
+    # files = [f.name for f in Path(".").glob("*.csv")]
+    files = ['feifanhe.csv']
+    for i, f in enumerate(files):
+        print(f"\n\n******* {f}")                                                
+        sjf = SJF(f)
+        sjf.generate_local_timelime()
+        sjf.initialize_time_line()
+        # sjf.pretty_print_local_timeline()
+        while sjf.still_running():
+            sjf.tick += 1
+            sjf.propose_next_tick()
+            sjf.determine_run_text_tick()
+        sjf.pretty_print_timeline()
+        sjf.print_running_sequence()
+        sjf.print_statistics()
