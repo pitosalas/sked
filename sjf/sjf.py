@@ -222,14 +222,35 @@ class SJF:
                 max_tick = len(process)
         self.log(MAINLOOP, f"{self.tick}, {max_tick}")
         return self.tick <= max_tick
-
+    
+    def print_running_sequence(self):
+        print("\n**** RUNNING SEQUENCE")
+        for tick, tick_data in enumerate(self.timeline):
+            running = None
+            for process, process_data in enumerate(tick_data):
+                if process_data[0] == 'c' and running is None:
+                    running = process
+                    print (f"Tick {tick}: Process {process} runs.")
+                elif process_data[0] == 'c' and running != None:
+                    print (f"Bug at tick {tick}: Process {process} wants to run, but process {running} is already running.")
+            if (running is None):
+                print(f"Tick {tick}: No Process is running")
+                
+            
 
 if __name__ == '__main__':
-    sjf = SJF('data0.csv')
-    sjf.generate_local_timelime()
-    sjf.initialize_time_line()
-    sjf.pretty_print_local_timeline()
-    while sjf.still_running():
-        sjf.propose_next_tick()
-        sjf.determine_run_text_tick()
-    sjf.pretty_print_timeline()
+    from pathlib import Path
+    # files = [f.name for f in Path(".").glob("*.csv")]
+    files = ['ireneguo.csv']
+    for i, f in enumerate(files):
+        print(f"\n\n******* {f}")                                                
+        sjf = SJF(f)
+        sjf.generate_local_timelime()
+        sjf.initialize_time_line()
+        sjf.pretty_print_local_timeline()
+        while sjf.still_running():
+            sjf.propose_next_tick()
+            sjf.determine_run_text_tick()
+        sjf.pretty_print_timeline()
+        sjf.print_running_sequence()
+        sjf.print_statistics()
