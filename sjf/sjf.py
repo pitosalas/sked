@@ -18,13 +18,14 @@ def log(func, arg=0):
 
 
 class SJF:
-    def __init__(self, filename):
+    def __init__(self, filename: str, nonpreemptive=True):
         self.filename = filename
         self.tick = 0
         self.local_timeline = []
         self.timeline = []
         self.running = None
         self.indent = 0
+        self.nonpreemptive = nonpreemptive
 
 # The file is a csv with 6 columns, corresponding to:
 # wait, burst1, io1, burst2, io2, burst3
@@ -79,7 +80,7 @@ class SJF:
         return local_state
 
     def determine_run_text_tick(self):
-        if self.running is not None and self.timeline[self.tick][self.running][0] == 'r':
+        if self.running is not None and self.timeline[self.tick][self.running][0] == 'r' and self.nonpreemptive:
             # raise Exception('Should not be here')
             self.update_local_tick_offsets(self.running)
         else:
@@ -196,29 +197,37 @@ class SJF:
                 print(f"Tick {tick}: No Process is running")
 
     def print_statistics(self):
-        print("\n**** STATISTICS\n")
+        print("     Statistics")
         wait_time = [0, 0, 0]
         for tick, tick_data in enumerate(self.timeline):
             for process, process_data in enumerate(tick_data):
                 if process_data[0] == 'r':
                     wait_time[process] += 1
-        print(f"Waiting time for each Process: {wait_time}")
+        print(f"     Waiting time for each Process: {wait_time}")
+
+    def run(self):
+        self.generate_local_timelime()
+        self.initialize_time_line()
+        # self.pretty_print_local_timeline()
+        while self.still_running():
+            self.tick += 1
+            self.propose_next_tick()
+            self.determine_run_text_tick()
+#       self.pretty_print_timeline()
+#       self.print_running_sequence()
+        self.print_statistics()
                 
         
 if __name__ == '__main__':
     from pathlib import Path
-    # files = [f.name for f in Path(".").glob("*.csv")]
-    files = ['feifanhe.csv']
+    files = [f.name for f in Path(".").glob("*.csv")]
+    # files = ['ireneguo.csv']
     for i, f in enumerate(files):
-        print(f"\n\n******* {f}")                                                
-        sjf = SJF(f)
-        sjf.generate_local_timelime()
-        sjf.initialize_time_line()
-        # sjf.pretty_print_local_timeline()
-        while sjf.still_running():
-            sjf.tick += 1
-            sjf.propose_next_tick()
-            sjf.determine_run_text_tick()
-        sjf.pretty_print_timeline()
-        sjf.print_running_sequence()
-        sjf.print_statistics()
+        print(f"\n**** File Name: {f}")                                                        
+        print(f"     Non Preemptive")                                                
+        sjf = SJF(f, True)
+        sjf.run()
+        print(f"     Preemptive")                                                
+        sjf = SJF(f, False)
+        sjf.run()
+
