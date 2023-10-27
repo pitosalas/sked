@@ -208,20 +208,20 @@ class SJF:
     def run(self):
         self.generate_local_timelime()
         self.initialize_time_line()
-        # self.pretty_print_local_timeline()
+        self.pretty_print_local_timeline()
         while self.still_running():
             self.tick += 1
             self.propose_next_tick()
             self.determine_run_text_tick()
-#       self.pretty_print_timeline()
-#       self.print_running_sequence()
+        self.pretty_print_timeline()
+        self.print_running_sequence()
         self.print_statistics()
                 
         
 if __name__ == '__main__':
     from pathlib import Path
-    files = [f.name for f in Path(".").glob("*.csv")]
-    # files = ['ireneguo.csv']
+    # files = [f.name for f in Path(".").glob("*.csv")]
+    files = ['jesse_levinson.csv']
     for i, f in enumerate(files):
         print(f"\n**** File Name: {f}")                                                        
         print(f"     Non Preemptive")                                                
