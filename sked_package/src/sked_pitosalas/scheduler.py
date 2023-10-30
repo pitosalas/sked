@@ -3,8 +3,6 @@ from abc import ABC, abstractmethod
 from pcb import PCB
 
 LOGGING = False
-
-
 class Scheduler(ABC):
     def __init__(self, sim):
         self.new_queue = Queue("New", sim)
